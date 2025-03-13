@@ -3,7 +3,6 @@
 import { useRef, useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Mic } from "lucide-react";
 import { DataGrid } from "react-data-grid";
 import "react-data-grid/lib/styles.css";
