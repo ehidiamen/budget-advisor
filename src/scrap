@@ -1,0 +1,37 @@
+ {/* ✅ Display Expenses Safely */}
+              {Array.isArray(generated.expenses) && generated.expenses.length > 0 ? (
+                <>
+                  <h3 className="text-lg mt-2">💸 Expenses:</h3>
+                  <ul className="list-disc pl-5">
+                    {generated.expenses.map((item, index) => (
+                      <li key={index} className="mt-1">
+                        <span className="font-semibold">{item.category}</span>: ${item.amount}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <p className="text-gray-500">No expenses listed.</p>
+              )}
+
+              {/* ✅ Display Recommended Savings */}
+              {generated.savings !== undefined && (
+                <p className="font-semibold mt-3">💾 Recommended Savings: ${generated.savings}</p>
+              )}
+
+              {/* ✅ Display Financial Concerns */}
+              {generated.concerns && (
+                <p className="mt-3"><span className="font-semibold">🔍 Financial Concerns:</span> {generated.concerns}</p>
+              )}
+
+              {/* ✅ Display AI Advice */}
+              {generated.advice && (
+                <p className="mt-3"><span className="font-semibold">💡 AI Advice:</span> {generated.advice}</p>
+              )}
+
+              {/* ✅ Download Button for Excel */}
+              {excelUrl && (
+                <a href={`http://localhost:8000${excelUrl}`} download className="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded-md">
+                  📥 Download Excel
+                </a>
+              )}
