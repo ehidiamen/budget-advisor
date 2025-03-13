@@ -18,10 +18,10 @@ export default function Home() {
   const [excelData, setExcelData] = useState([]);
   const chatEndRef = useRef(null); // Reference to the bottom of the page
 
-  // ✅ Scroll to the bottom whenever generated content updates
+  // Scroll to the bottom whenever generated content updates
   useEffect(() => {
     if (generated) {
-        setNewMessage(""); // ✅ Clear input field
+        setNewMessage(""); // Clear input field
         if (chatEndRef.current) {
           chatEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
@@ -121,14 +121,14 @@ export default function Home() {
   };
 
   const formatNumberedText = (text) => {
-    if (!text) return ""; // ✅ Prevents errors if text is missing
+    if (!text) return ""; // Prevents errors if text is missing
   
-    const lines = text.split("\n"); // ✅ Split text into lines
+    const lines = text.split("\n"); // Split text into lines
   
     return (
       <ol className="list-decimal pl-5 space-y-2">
         {lines.map((line, index) => {
-          // ✅ Detect lines starting with a number (e.g., "1. Step one")
+          // Detect lines starting with a number (e.g., "1. Step one")
           if (/^\d+\./.test(line.trim())) {
             return <li key={index} className="text-gray-700">{line.trim()}</li>;
           }
@@ -142,18 +142,18 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center gap-4 p-6 bg-gray-100 min-h-screen">
       
-      {/* ✅ AI-Generated Budget Section */}
+      {/* AI-Generated Budget Section */}
       <div className="w-full max-w-3xl bg-white shadow-md rounded-md p-6">
         <h2 className="text-2xl font-bold text-center text-blue-600">📊 AI-Generated Budget</h2>
 
         {generated && (
           <div className="mt-4 space-y-4">
-            {/* 💰 Income */}
+            {/* Income */}
             {generated.income !== undefined && (
               <p className="text-lg font-semibold text-green-700">💰 Income: ${generated.income}</p>
             )}
 
-            {/* 💸 Expenses */}
+            {/* Expenses */}
             {Array.isArray(generated.expenses) && generated.expenses.length > 0 ? (
               <div className="p-4 bg-gray-50 border-l-4 border-red-500">
                 <h3 className="text-lg font-semibold text-red-600">💸 Expenses:</h3>
@@ -169,12 +169,12 @@ export default function Home() {
               <p className="text-gray-500">No expenses listed.</p>
             )}
 
-            {/* 💾 Savings */}
+            {/* Savings */}
             {generated.savings !== undefined && (
               <p className="text-lg font-semibold text-blue-700">💾 Recommended Savings: ${generated.savings}</p>
             )}
 
-            {/* 🔍 Financial Concerns */}
+            {/* Financial Concerns */}
             {generated.concerns?.content && (
                 <div className="p-3 bg-purple-100 border-l-4 border-purple-500">
                     <span className="font-semibold">🔍 Financial Concerns:</span>
@@ -182,7 +182,7 @@ export default function Home() {
                 </div>
             )}
 
-            {/* 💡 AI Advice */}
+            {/* AI Advice */}
             {generated.advice?.content && (
               <div className="p-3 bg-yellow-100 border-l-4 border-yellow-500">
                 <span className="font-semibold">💡 AI Advice:</span>
@@ -192,7 +192,7 @@ export default function Home() {
 
             
 
-            {/* 📥 Download & View Spreadsheet Buttons */}
+            {/* Download & View Spreadsheet Buttons */}
             {excelUrl && (
               <div className="mt-4 flex justify-center gap-4">
                 <a href={excelUrl} download className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
@@ -209,7 +209,7 @@ export default function Home() {
           </div>
         )}
       </div>
-      {/* ✅ Render Spreadsheet Table */}
+      {/* Render Spreadsheet Table */}
       {excelData.length > 0 && (
         <div className="mt-4 p-4 bg-white shadow-md border rounded-md">
           <h2 className="text-xl font-bold mb-2 text-center">📄 Budget Spreadsheet</h2>
@@ -221,9 +221,9 @@ export default function Home() {
           />
         </div>
       )}
-      {/* ✅ Invisible div at the bottom for scrolling */}
+      {/* Invisible div at the bottom for scrolling */}
       <div ref={chatEndRef} />
-      {/* ✅ Input & Send Button Section */}
+      {/* Input & Send Button Section */}
       <div className="flex items-center gap-4 w-full max-w-lg bg-white p-4 shadow-md rounded-md">
         <Input
           type="text"
