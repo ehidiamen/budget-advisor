@@ -7,6 +7,7 @@ import { Send, Mic } from "lucide-react";
 import { DataGrid } from "react-data-grid";
 import "react-data-grid/lib/styles.css";
 import * as XLSX from "xlsx";
+import BudgetForm from "./components/BudgetForm";
 
 export default function Home() {
   const [newMessage, setNewMessage] = useState("");
@@ -16,6 +17,7 @@ export default function Home() {
   const [generated, setGenerated] = useState(null);
   const [excelUrl, setExcelUrl] = useState("");
   const [excelData, setExcelData] = useState([]);
+  const [showForm, setShowForm] = useState(false);
   const chatEndRef = useRef(null); // Reference to the bottom of the page
 
   // Scroll to the bottom whenever generated content updates
@@ -55,6 +57,36 @@ export default function Home() {
         setGenerated({ error: error.message });
     } finally {
         setLoading(false);
+        setShowForm(false); // Hide form after submission
+    }
+  };
+
+  const handleGenerateBudgetFromForm = async (budgetData) => {
+    setLoading(true);
+    setGenerated(null);
+    setExcelUrl(null);
+    setExcelData([]); 
+
+    try {
+      const response = await fetch("https://budgetadvisor.onrender.com/generate_budget_from_form", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(budgetData),
+      });
+
+      const data = await response.json();
+      if (!response.ok || data.error) {
+        throw new Error(data.error || "Failed to generate budget.");
+      }
+
+      setGenerated(data.budget || {});
+      setExcelUrl("https://budgetadvisor.onrender.com" + data.excel_url || ""); 
+    } catch (error) {
+      console.error("Error fetching budget:", error);
+      setGenerated({ error: error.message });
+    } finally {
+      setLoading(false);
+      setShowForm(false); // Hide form after submission
     }
   };
 
@@ -239,6 +271,19 @@ export default function Home() {
           {loading ? "Generating..." : <Send />}
         </Button>
       </div>
+
+       {/* Toggle Form Visibility */}
+       {!showForm ? (
+          <button
+             onClick={() => setShowForm(true)}
+             className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+           >
+             ✏️ Fill Budget Form
+           </button>
+        
+        ) : (
+           <BudgetForm onSubmit={handleGenerateBudgetFromForm} onCancel={() => setShowForm(false)} />
+        )}
     </div>
   );
 }
