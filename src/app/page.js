@@ -1,9 +1,8 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Mic } from "lucide-react";
+import { Send, Mic, StopCircle } from "lucide-react";
 import { DataGrid } from "react-data-grid";
 import "react-data-grid/lib/styles.css";
 import * as XLSX from "xlsx";
@@ -11,14 +10,15 @@ import BudgetForm from "./components/BudgetForm";
 
 export default function Home() {
   const [newMessage, setNewMessage] = useState("");
-  const [isListening, setIsListening] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [loading, setLoading] = useState(false);
-  const recognitionRef = useRef(null);
   const [generated, setGenerated] = useState(null);
   const [excelUrl, setExcelUrl] = useState("");
   const [excelData, setExcelData] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const chatEndRef = useRef(null); // Reference to the bottom of the page
+  const chatEndRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   // Scroll to the bottom whenever generated content updates
   useEffect(() => {
@@ -90,32 +90,56 @@ export default function Home() {
     }
   };
 
-  const handleSpeech = () => {
-    if (!recognitionRef.current) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert("Speech recognition is not supported in this browser.");
-            return;
-        }
-        recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = false;
-        recognitionRef.current.interimResults = false;
-        recognitionRef.current.lang = "en-US";
 
-        recognitionRef.current.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            setNewMessage(transcript);
-        };
+  // ✅ Start Recording
+  const handleStartRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
 
-        recognitionRef.current.onend = () => setIsListening(false);
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.onstop = handleAudioStop;
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Error starting voice recording:", error);
     }
+  };
 
-    if (isListening) {
-        recognitionRef.current.stop();
-        setIsListening(false);
-    } else {
-        recognitionRef.current.start();
-        setIsListening(true);
+  // ✅ Stop Recording and Send to FastAPI
+  const handleStopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  // ✅ Process Recorded Audio and Send to FastAPI for Transcription
+  const handleAudioStop = async () => {
+    const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+    const formData = new FormData();
+    formData.append("file", audioBlob, "audio.wav");
+
+    try {
+      const response = await fetch("https://budgetadvisor.onrender.com/transcribe_audio", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.transcription) {
+        setNewMessage(data.transcription); // ✅ Set recognized speech as input text
+      } else {
+        console.error("Speech recognition failed:", data);
+      }
+    } catch (error) {
+      console.error("Error converting audio to text:", error);
     }
   };
 
@@ -169,12 +193,11 @@ export default function Home() {
       </ol>
     );
   };
-  
 
   return (
     <div className="flex flex-col items-center gap-4 p-6 bg-gray-100 min-h-screen">
       
-      {/* AI-Generated Budget Section */}
+      {/* ✅ AI-Generated Budget Section */}
       <div className="w-full max-w-3xl bg-white shadow-md rounded-md p-6">
         <h2 className="text-2xl font-bold text-center text-blue-600">📊 AI-Generated Budget</h2>
 
@@ -253,37 +276,54 @@ export default function Home() {
           />
         </div>
       )}
+    
       {/* Invisible div at the bottom for scrolling */}
       <div ref={chatEndRef} />
-      {/* Input & Send Button Section */}
+      {/* ✅ Input & Send Button */}
       <div className="flex items-center gap-4 w-full max-w-lg bg-white p-4 shadow-md rounded-md">
-        <Input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Speak or type your budget details..."
-          disabled={loading}
-        />
-        <Button onClick={handleSpeech} variant={isListening ? "destructive" : "default"}>
-          <Mic />
+      <textarea
+        value={newMessage}
+        onChange={(e) => setNewMessage(e.target.value)}
+        placeholder="Speak or type your budget details..."
+        disabled={loading}
+        rows={5}  // ✅ Set the number of rows to 5
+        className="w-full p-2 border rounded-md shadow-sm focus:ring focus:ring-blue-300"
+      />
+
+       <Button
+          onClick={isRecording ? handleStopRecording : handleStartRecording}
+          className={`flex items-center gap-2 ${
+            isRecording ? "bg-red-500" : "bg-green-500"
+          } text-white`}
+        >
+          {isRecording ? (
+            <>
+              <StopCircle className="h-5 w-5" />
+              Stop Recording
+            </>
+          ) : (
+            <>
+              <Mic className="h-5 w-5" />
+              Voice Input
+            </>
+          )}
         </Button>
         <Button onClick={handleGenerateBudget} disabled={loading}>
-          {loading ? "Generating..." : <Send />}
+          {loading ? "Generating..." : <Send /> }
         </Button>
       </div>
 
-       {/* Toggle Form Visibility */}
-       {!showForm ? (
-          <button
-             onClick={() => setShowForm(true)}
-             className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-           >
-             ✏️ Fill Budget Form
-           </button>
-        
-        ) : (
-           <BudgetForm onSubmit={handleGenerateBudgetFromForm} onCancel={() => setShowForm(false)} />
-        )}
+      {/* ✅ Show Form Button */}
+      {!showForm ? (
+        <button
+          onClick={() => setShowForm(true)}
+          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+        >
+          ✏️ Fill Budget Form
+        </button>
+      ) : (
+        <BudgetForm onSubmit={handleGenerateBudgetFromForm} onCancel={() => setShowForm(false)} />
+      )}
     </div>
   );
 }
