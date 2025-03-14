@@ -161,9 +161,9 @@ export default function Home() {
       <ol className="list-decimal pl-5 space-y-2">
         {lines.map((line, index) => {
           // Detect lines starting with a number (e.g., "1. Step one")
-          if (/^\d+\./.test(line.trim())) {
-            return <li key={index} className="text-gray-700">{line.trim()}</li>;
-          }
+          //if (/^\d+\./.test(line.trim())) {
+          //  return <li key={index} className="text-gray-700">{line.trim()}</li>;
+          //}
           return <p key={index} className="text-gray-600">{line}</p>;
         })}
       </ol>
